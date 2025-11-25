@@ -73,3 +73,80 @@ def closest_pair_recursive(Px: List[Tuple[int, int]], Py: List[Tuple[int, int]])
     else:
         min_dist, closest_pair = dist_R, pair_R
 
+ # 3. Combinar: (El punto más cercano puede estar en la "banda" de 2*min_dist)
+    
+    # Crear la banda S (puntos en Py que están dentro de min_dist de la línea de división)
+    strip = [p for p in Py if abs(p[0] - median_point[0]) < min_dist]
+
+    # Analizar la banda (Strip Closest): O(n)
+    min_dist_sq = min_dist * min_dist
+    
+    # Solo necesitamos comparar un punto con, a lo sumo, los 7 siguientes.
+    for i in range(len(strip)):
+        # La condición 'j < i + 7' asegura la complejidad O(n)
+        for j in range(i + 1, min(i + 8, len(strip))):
+            p1, p2 = strip[i], strip[j]
+            dist_sq = euclidean_distance_sq(p1, p2)
+            
+            if dist_sq < min_dist_sq:
+                min_dist_sq = dist_sq
+                closest_pair = (p1, p2)
+
+    if min_dist_sq < min_dist * min_dist:
+        min_dist = math.sqrt(min_dist_sq)
+
+    return min_dist, closest_pair
+
+
+def closest_pair_div_conquer(points: List[Tuple[int, int]]) -> Tuple[float, Union[Tuple[Tuple[int, int], Tuple[int, int]], None]]:
+    """Prepara los datos y lanza el algoritmo Divide y Vencerás."""
+    n = len(points)
+    if n < 2:
+        return float('inf'), None
+
+    # Ordenar los puntos por x (Px) y por y (Py)
+    # Este paso inicial toma O(n log n) y es el factor dominante inicial.
+    Px = sorted(points, key=lambda p: p[0])
+    Py = sorted(points, key=lambda p: p[1])
+
+    return closest_pair_recursive(Px, Py)
+
+# --- 4. Ejecución y Comparación de Tiempos ---
+
+def run_comparison():
+    print(" Análisis del Par de Puntos Más Cercano")
+    print("-" * 50)
+    
+    # --- Fuerza Bruta ---
+    start_time_brute = time.perf_counter()
+    dist_brute, pair_brute = brute_force(POINTS)
+    end_time_brute = time.perf_counter()
+    time_brute = (end_time_brute - start_time_brute) * 1000 # en milisegundos
+
+    print(f"**1. Fuerza Bruta (O(n^2))**")
+    print(f"   Distancia Mínima: {dist_brute:.4f}")
+    print(f"   Par Más Cercano: {pair_brute}")
+    print(f"   Tiempo de Ejecución: {time_brute:.6f} ms")
+    print("-" * 50)
+
+    # --- Divide y Vencerás ---
+    start_time_dc = time.perf_counter()
+    dist_dc, pair_dc = closest_pair_div_conquer(POINTS)
+    end_time_dc = time.perf_counter()
+    time_dc = (end_time_dc - start_time_dc) * 1000 # en milisegundos
+
+    print(f"**2. Divide y Vencerás (O(n log n))**")
+    print(f"   Distancia Mínima: {dist_dc:.4f}")
+    print(f"   Par Más Cercano: {pair_dc}")
+    print(f"   Tiempo de Ejecución: {time_dc:.6f} ms")
+    print("-" * 50)
+
+    # --- Comparación ---
+    print(f"**3. Comparación de Tiempos**")
+    # Para n=29, la diferencia es muy pequeña e incluso la fuerza bruta puede ser más rápida por overhead.
+    # El valor del tiempo es solo ilustrativo; la complejidad es lo que importa.
+    print(f"   Fuerza Bruta (O(n^2)): {time_brute:.6f} ms")
+    print(f"   Divide y Vencerás (O(n log n)): {time_dc:.6f} ms")
+
+# Ejecutar el análisis
+run_comparison()
