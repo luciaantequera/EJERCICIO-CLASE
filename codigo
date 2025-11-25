@@ -1,0 +1,75 @@
+import math
+import itertools
+import time
+from typing import List, Tuple, Union
+
+# Lista de coordenadas proporcionada
+POINTS = [
+    (2, 3), (5, 4), (9, 6), (4, 7), (8, 1), (7, 2), (12, 5), (14, 3), (3, 10), (6, 8),
+    (11, 11), (13, 9), (15, 6), (18, 2), (17, 7), (19, 4), (21, 3), (20, 8), (23, 5),
+    (25, 7), (24, 1), (26, 4), (30, 2), (28, 9), (31, 7), (34, 6), (33, 3), (36, 8),
+    (38, 5)
+]
+
+# --- 1. Funciones Auxiliares ---
+
+def euclidean_distance_sq(p1: Tuple[int, int], p2: Tuple[int, int]) -> float:
+    """Calcula la distancia euclidiana al cuadrado entre dos puntos."""
+    return (p2[0] - p1[0])*2 + (p2[1] - p1[1])*2
+
+def euclidean_distance(p1: Tuple[int, int], p2: Tuple[int, int]) -> float:
+    """Calcula la distancia euclidiana entre dos puntos."""
+    return math.sqrt(euclidean_distance_sq(p1, p2))
+
+# --- 2. Algoritmo de Fuerza Bruta (O(n^2)) ---
+
+def brute_force(points: List[Tuple[int, int]]) -> Tuple[float, Union[Tuple[Tuple[int, int], Tuple[int, int]], None]]:
+    """Encuentra la distancia mínima y el par de puntos por fuerza bruta."""
+    n = len(points)
+    if n < 2:
+        return float('inf'), None
+
+    min_dist_sq = float('inf')
+    closest_pair = None
+
+    for p1, p2 in itertools.combinations(points, 2):
+        dist_sq = euclidean_distance_sq(p1, p2)
+        if dist_sq < min_dist_sq:
+            min_dist_sq = dist_sq
+            closest_pair = (p1, p2)
+
+    return math.sqrt(min_dist_sq), closest_pair
+
+# --- 3. Algoritmo Divide y Vencerás (O(n log n)) ---
+
+def closest_pair_recursive(Px: List[Tuple[int, int]], Py: List[Tuple[int, int]]) -> Tuple[float, Union[Tuple[Tuple[int, int], Tuple[int, int]], None]]:
+    """Función recursiva principal del Divide y Vencerás."""
+    n = len(Px)
+    
+    # Caso base: Si quedan 3 puntos o menos, usar fuerza bruta.
+    if n <= 3:
+        return brute_force(Px)
+
+    # 1. Dividir:
+    mid = n // 2
+    median_point = Px[mid]
+    
+    # Dividir Px y Py
+    Px_L = Px[:mid]
+    Px_R = Px[mid:]
+    
+    # La división de Py se hace eficientemente por pertenencia al lado L o R.
+    Py_L = [p for p in Py if p[0] < median_point[0] or (p[0] == median_point[0] and p[1] < median_point[1])]
+    Py_R = [p for p in Py if p not in Py_L]
+
+
+    # 2. Vencer:
+    (dist_L, pair_L) = closest_pair_recursive(Px_L, Py_L)
+    (dist_R, pair_R) = closest_pair_recursive(Px_R, Py_R)
+
+    # Encontrar el mínimo global hasta ahora
+    if dist_L < dist_R:
+        min_dist, closest_pair = dist_L, pair_L
+    else:
+        min_dist, closest_pair = dist_R, pair_R
+
